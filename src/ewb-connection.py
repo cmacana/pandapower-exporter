@@ -94,7 +94,6 @@ class Feeder:
     def create_pp_buses(self):
         for i, bus in self.buses.iterrows():
             pp.create_bus(self.net, name=bus["name"], vn_kv=bus["vn_kv"] / 1000, busgeodata=bus["busgeodata"])
-        pd.DataFrame(self.net.bus).to_csv(output_path + "pp_buses.csv")
         return self.net.bus
 
     def create_pp_lines(self):
@@ -110,8 +109,6 @@ class Feeder:
             line_name = from_cn_id + "-" + to_cn_id
             pp.create_line(net=self.net, name=line_name, from_bus=from_bus, to_bus=to_bus, length_km=length,
                            std_type="NAYY 4x50 SE")
-        pd.DataFrame(self.net.line).to_csv(output_path + "pp_lines.csv")
-        conductors.to_csv(output_path + "ewb_conductors.csv")
         return self.net.line
 
     def create_pp_transformers(self):
@@ -121,13 +118,10 @@ class Feeder:
             hv_bus = pp.get_element_index(self.net, "bus", trafo["connections"][0]['connectivityNodeId'])
             lv_bus = pp.get_element_index(self.net, "bus", trafo["connections"][1]['connectivityNodeId'])
             pp.create_transformer(self.net, hv_bus=hv_bus, lv_bus=lv_bus, std_type="0.4 MVA 20/0.4 kV")
-        pd.DataFrame(self.net.trafo).to_csv(output_path + "pp_trafos.csv")
-        powerTrafos.to_csv(output_path + "ewb_trafos.csv")
         return self.net.trafo
 
     def get_connections(self):
         conn = self.assets_df["connections"]
-        conn.to_csv(output_path + "connections.csv")
         return conn
 
     def create_pp_extgrid(self):
@@ -137,9 +131,10 @@ class Feeder:
 
 
 testFeeder = Feeder(feeder_id="AL002")
-# pp_buses = testFeeder.create_pp_buses()
-# pp_extgrid = testFeeder.create_pp_extgrid()
-# pp_trafos = testFeeder.create_pp_transformers()
+pp_buses = testFeeder.create_pp_buses()
+pp_extgrid = testFeeder.create_pp_extgrid()
+print(testFeeder.net)
+#pp_trafos = testFeeder.create_pp_transformers()
 # pp_line = testFeeder.create_pp_lines()
 # pp.create_load(testFeeder.net, bus=0, p_mw=1, q_mvar=0.5,const_z_percent=0,const_i_percent=0,name="Load1")
 # pp.create_load(testFeeder.net, bus=14, p_mw=1, q_mvar=0.5, name="Load2")
