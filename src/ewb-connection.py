@@ -111,13 +111,24 @@ class Feeder:
                            std_type="NAYY 4x50 SE")
         return self.net.line
 
+    def create_pp_load(self, element):
+        bus = pp.get_element_index(self.net, "bus", element["connections"][0]['connectivityNodeId'])
+        pp.create_load(self.net, bus=bus, p_mw=0)
+
+    def create_pp_transfomer(self, trafo):
+        hv_bus = pp.get_element_index(self.net, "bus", trafo["connections"][0]['connectivityNodeId'])
+        lv_bus = pp.get_element_index(self.net, "bus", trafo["connections"][1]['connectivityNodeId'])
+        pp.create_transformer(self.net, hv_bus=hv_bus, lv_bus=lv_bus, std_type="0.4 MVA 20/0.4 kV")
+
     def create_pp_transformers(self):
         distTrafos = self.assets_df[self.assets_df['type'] == "DistTransformer"]
         powerTrafos = distTrafos.drop_duplicates(subset="name").reset_index()
         for _, trafo in powerTrafos.iterrows():
-            hv_bus = pp.get_element_index(self.net, "bus", trafo["connections"][0]['connectivityNodeId'])
-            lv_bus = pp.get_element_index(self.net, "bus", trafo["connections"][1]['connectivityNodeId'])
-            pp.create_transformer(self.net, hv_bus=hv_bus, lv_bus=lv_bus, std_type="0.4 MVA 20/0.4 kV")
+            num_conn = len(trafo["connections"])
+            if num_conn == 1:
+                self.create_pp_load(trafo)
+                if num_conn == 2:
+                    self.create_pp_transfomer(trafo)
         return self.net.trafo
 
     def get_connections(self):
@@ -132,14 +143,13 @@ class Feeder:
 
 testFeeder = Feeder(feeder_id="AL002")
 pp_buses = testFeeder.create_pp_buses()
+print(pp_buses)
 pp_extgrid = testFeeder.create_pp_extgrid()
+pp_trafos = testFeeder.create_pp_transformers()
+pp_line = testFeeder.create_pp_lines()
 print(testFeeder.net)
-#pp_trafos = testFeeder.create_pp_transformers()
-# pp_line = testFeeder.create_pp_lines()
-# pp.create_load(testFeeder.net, bus=0, p_mw=1, q_mvar=0.5,const_z_percent=0,const_i_percent=0,name="Load1")
-# pp.create_load(testFeeder.net, bus=14, p_mw=1, q_mvar=0.5, name="Load2")
-# pp_load = testFeeder.net.load
-# pp.runpp(testFeeder.net)
+print(testFeeder.net.load)
+# print(pp.runpp(testFeeder.net))
 # print(testFeeder.net)
 # lf_res = testFeeder.net.res_bus
 # lf_res.to_csv("lf_res_bus")
